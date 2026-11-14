@@ -299,6 +299,9 @@
     <string name="login_continue">Continue</string>
     <string name="login_login">Login</string>
     <string name="login_type_email">Login with email address</string>
+    <string name="login_type_oidc">Login with your organization (OpenID Connect)</string>
+    <string name="login_oidc_info">Enter the server or your email address. You will sign in with your organization\'s login page in the browser; DAVx⁵ never sees your password and stays signed in until you sign out there.</string>
+    <string name="login_oidc_server">Server or email address</string>
     <string name="login_email_address">Email address</string>
     <string name="login_email_address_error">Valid email address required</string>
     <string name="login_email_address_info">The email domain is used as base URL.</string>

@@ -49,6 +49,51 @@ class PreconfigurationRepositoryTest {
     }
 
     @Test
+    fun testFetchPreconfiguredSettings_oauth() = runTest {
+        @Language("json")
+        val json =
+            """
+            {
+              "baseRoot": "https://dav.example.com/",
+              "oauth": {
+                "issuer": "https://idp.example.com/realms/acme",
+                "client_id": "davx5",
+                "scope": "openid email offline_access",
+                "login_hint": "user@example.com"
+              }
+            }
+            """.trimIndent()
+        respondWith(HttpStatusCode.OK, json)
+
+        val settings = preconfigurationRepository.fetchPreconfiguredSettings("https://example.com/")
+        val loginInfo = settings.toLoginInfo("https://example.com/")
+
+        assertEquals(null, loginInfo.credentials)
+        assertEquals("user@example.com", loginInfo.suggestedAccountName)
+        val hint = loginInfo.oidc!!
+        assertEquals("https://idp.example.com/realms/acme", hint.issuer)
+        assertEquals("davx5", hint.clientId)
+        assertEquals("openid email offline_access", hint.scope)
+        assertEquals("user@example.com", hint.loginHint)
+    }
+
+    @Test
+    fun testFetchPreconfiguredSettings_oauthRegistrationToken() = runTest {
+        respondWith(HttpStatusCode.OK, """{"baseRoot":"https://dav.example.com/","oauth":{"registration_token":"one-time"}}""")
+        val loginInfo = preconfigurationRepository.fetchPreconfiguredSettings("https://example.com/").toLoginInfo("https://example.com/")
+        assertEquals("one-time", loginInfo.oidc!!.registrationToken)
+        assertEquals(null, loginInfo.oidc!!.issuer)
+    }
+
+    @Test
+    fun testFetchPreconfiguredSettings_basicAuthWinsOverOauth() = runTest {
+        respondWith(HttpStatusCode.OK, """{"baseRoot":"https://dav.example.com/","basicAuth":{"username":"u","password":"p"},"oauth":{"client_id":"x"}}""")
+        val loginInfo = preconfigurationRepository.fetchPreconfiguredSettings("https://example.com/").toLoginInfo("https://example.com/")
+        assertEquals(null, loginInfo.oidc)
+        assertEquals("u", loginInfo.credentials!!.username)
+    }
+
+    @Test
     fun testFetchPreconfiguredSettings_badServer() = runTest {
         respondWith(HttpStatusCode.NotFound, "not found")
 

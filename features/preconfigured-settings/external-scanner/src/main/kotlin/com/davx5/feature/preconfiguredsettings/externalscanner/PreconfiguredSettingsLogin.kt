@@ -41,6 +41,7 @@ import at.bitfire.davdroid.ui.ExternalUris
 import at.bitfire.davdroid.ui.composable.Assistant
 import at.bitfire.davdroid.ui.setup.LoginInfo
 import at.bitfire.davdroid.ui.setup.LoginType
+import at.bitfire.davdroid.ui.setup.OidcLogin
 import com.davx5.feature.preconfiguredsettings.shared.LocalizedException
 import io.ktor.http.parseUrl
 import at.bitfire.davdroid.R as oseR
@@ -62,7 +63,18 @@ object PreconfiguredSettingsLogin : LoginType {
         initialLoginInfo: LoginInfo,
         onLogin: (LoginInfo) -> Unit
     ) {
-        LoginScreen(snackbarHostState, onLogin)
+        // A profile that says to sign in with the identity provider continues there.
+        var oidcLogin by remember { mutableStateOf<LoginInfo?>(null) }
+        val signIn = oidcLogin
+        if (signIn != null)
+            OidcLogin.LoginScreen(snackbarHostState, signIn, onLogin)
+        else
+            LoginScreen(snackbarHostState, onLogin = { loginInfo: LoginInfo ->
+                if (loginInfo.oidc != null && loginInfo.credentials == null)
+                    oidcLogin = loginInfo
+                else
+                    onLogin(loginInfo)
+            })
     }
 
     @Composable
