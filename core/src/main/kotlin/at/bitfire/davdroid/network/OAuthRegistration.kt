@@ -36,7 +36,10 @@ class OAuthRegistration @Inject constructor(
     private val oAuthIntegration: OAuthIntegration
 ) {
 
-    class RegistrationException(message: String) : Exception(message)
+    open class RegistrationException(message: String) : Exception(message)
+
+    /** The authorization server doesn't let this client register (HTTP 401/403, e.g. no open registration). */
+    class RegistrationRefusedException(message: String) : RegistrationException(message)
 
     @VisibleForTesting
     internal var clientFactory: () -> HttpClient = { httpClientBuilder.build() }
@@ -64,6 +67,8 @@ class OAuthRegistration @Inject constructor(
                     header(HttpHeaders.Authorization, "Bearer $initialAccessToken")
                 setBody(json.encodeToString(request))
             }
+            if (response.status.value == 401 || response.status.value == 403)
+                throw RegistrationRefusedException("Client registration refused: HTTP ${response.status.value} ${response.bodyAsText().take(200)}")
             if (!response.status.isSuccess())
                 throw RegistrationException("Client registration: HTTP ${response.status.value} ${response.bodyAsText().take(200)}")
             response.bodyAsText()

@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import at.bitfire.davdroid.R
 import at.bitfire.davdroid.network.OAuthIntegration
 import at.bitfire.davdroid.network.OAuthOidc
+import at.bitfire.davdroid.network.OAuthRegistration
 import at.bitfire.davdroid.settings.Credentials
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -95,7 +96,12 @@ class OidcLoginViewModel @AssistedInject constructor(
                 uiState = uiState.copy(inProgress = false, authorizationRequest = prepared.request)
             } catch (e: Exception) {
                 logger.log(Level.WARNING, "OIDC sign-in couldn't be prepared", e)
-                uiState = uiState.copy(inProgress = false, error = e.message ?: e.toString())
+                val message = when (e) {
+                    is OAuthRegistration.RegistrationRefusedException -> context.getString(R.string.login_oidc_registration_refused)
+                    is OAuthOidc.OidcException -> e.message
+                    else -> null
+                } ?: e.message ?: e.toString()
+                uiState = uiState.copy(inProgress = false, error = message)
             }
         }
     }

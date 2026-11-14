@@ -72,10 +72,17 @@ class OAuthRegistrationTest {
     }
 
     @Test
-    fun `a refused registration is an error`() = runTest {
+    fun `a refused registration is reported as refused`() = runTest {
         serve(HttpStatusCode.Forbidden, """{"error":"insufficient_scope"}""")
         assertTrue(runCatching { registration.register(Url("https://idp.example/register"), null) }.exceptionOrNull()
-                is OAuthRegistration.RegistrationException)
+                is OAuthRegistration.RegistrationRefusedException)
+    }
+
+    @Test
+    fun `another failure is a plain registration error`() = runTest {
+        serve(HttpStatusCode.InternalServerError, "oops")
+        val e = runCatching { registration.register(Url("https://idp.example/register"), null) }.exceptionOrNull()
+        assertTrue(e is OAuthRegistration.RegistrationException && e !is OAuthRegistration.RegistrationRefusedException)
     }
 
 }

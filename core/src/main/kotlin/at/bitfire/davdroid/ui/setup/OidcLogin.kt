@@ -10,9 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.LinearProgressIndicator
@@ -125,11 +123,8 @@ fun OidcLoginScreen(
         nextEnabled = canContinue,
         onNext = onLogin
     ) {
-        Column(
-            Modifier
-                .padding(8.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
+        // Assistant scrolls already; a second scrollable column inside it would crash
+        Column(Modifier.padding(8.dp)) {
             Text(
                 stringResource(R.string.login_type_oidc),
                 style = MaterialTheme.typography.headlineMedium,
